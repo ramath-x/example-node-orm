@@ -1,0 +1,11 @@
+{
+"customizations": {
+        "vscode": {
+            "extensions": [
+				"mhutchie.git-graph",
+				"Codeium.codeium",
+				"esbenp.prettier-vscode"
+			]
+        }
+    }
+}
