@@ -10,6 +10,11 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "dotenv": "^16.4.5",
     "nodemon": "^3.1.0"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "import-export": "^1.0.1"
   }
 }
