@@ -108,20 +108,25 @@ app.get('/users/:id', async (req, res) => {
     }
 })
 
-//  path = POST /user
+//  path = POST /user + address
 app.post('/user', async (req, res) => {
 
     try {
         let user = req.body;
-        const results = await conn.query('INSERT INTO users SET ?', user)
+        const results = await User.create(user)
+        user.userId = await results.id
+        const address = await Address.create(user)
+
         res.json({
             success: 'insert ok',
-            data: results[0]
+            user: results,
+            address: address
         });
-    } catch (error) {
-        console.error('Error inserting user:', error.message)
+    } catch (errors) {
+        console.error('Error insert user:', errors.errors[0].message)
         res.status(500).json({
-            error: 'Error inserting user'
+            message: 'Error insert user',
+            error: errors.errors[0].message
         })
     }
 })
@@ -139,8 +144,8 @@ app.put('/user/:id', async (req, res) => {
             success: 'update ok',
             data: results[0]
         });
-    } catch (error) {
-        console.error('Error upda user:', error.message)
+    } catch (errors) {
+        console.error('Error upda user:', errors.msg)
         res.status(500).json({
             error: 'Error upda user'
         })
@@ -167,6 +172,7 @@ app.delete('/user/:id', async (req, res) => {
 
 app.listen(port, async (req, res) => {
     await initMySql()
-    await sequelize.sync({ force: true });
+    // await sequelize.sync({ force: true });
+    await sequelize.sync();
     console.log(`Server is running on http://localhost:${port}`)
 })
