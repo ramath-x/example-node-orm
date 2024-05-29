@@ -3,7 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const mysql = require("mysql2/promise");
-const Sequelize = require('sequelize');
+const { Sequelize, DataTypes } = require("sequelize");
 app.use(bodyParser.json());
 
 
@@ -27,22 +27,48 @@ const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, pr
 });
 
 
-// async await
-app.get('/testdb-new', async (req, res) => {
-    try {
-        const results = await conn.query('SELECT * FROM users')
-        await sequelize.authenticate()
-        console.log('Connection has been established successfully.')
-        res.json(results[0])
-    } catch (error) {
-        console.error('Error fetching users:', error.message)
-        res.status(500).json({ error: 'Error fetching users' })
+// table users
+const User = sequelize.define('users', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true
+
     }
-
-
-
-
+}, {
+    timestamps: true
 })
+
+const Address = sequelize.define(
+    "addresses",
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+        },
+        address1: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        }
+    },
+    {},
+);
+
+User.hasMany(Address)
 
 
 // path = GET /users
@@ -141,5 +167,6 @@ app.delete('/user/:id', async (req, res) => {
 
 app.listen(port, async (req, res) => {
     await initMySql()
+    await sequelize.sync({ force: true });
     console.log(`Server is running on http://localhost:${port}`)
 })
