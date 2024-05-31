@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   app:
@@ -28,6 +28,6 @@ services:
       - MYSQL_ROOT_PASSWORD=root_pass
       - MYSQL_USER=demo_user
       - MYSQL_PASSWORD=demo_pass
-      - MYSQL_DATABASE=demo_node_api
+      - MYSQL_DATABASE=tutorials
     volumes:
       - ./mysql-init:/docker-entrypoint-initdb.d
