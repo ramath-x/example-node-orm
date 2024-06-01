@@ -2,12 +2,15 @@ require('dotenv').config()
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
-// const swaggerUi = require('swagger-ui-express');
-// const swaggerDocument = require('./swagger.json');
+const swaggerUi = require('swagger-ui-express');
+// const swaggerSpec = require('./swagger.js');
+const swaggerDocument = require('./swagger.json'); // เปลี่ยนมาใช้ swagger-jsdoc
 const { Sequelize, DataTypes, cast } = require("sequelize");
 app.use(bodyParser.json());
-
-
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// router.use('/api-docs', swaggerUi.serve);
+// router.get('/api-docs', swaggerUi.setup(swaggerDocument));
+// app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 const port = 8000;
 
 let conn = null
@@ -61,6 +64,26 @@ const Address = sequelize.define("addresses", {
 User.hasMany(Address)
 Address.belongsTo(User)
 
+/*
+    * @swagger
+    * /api/resource:
+* get:
+* summary: Get a resource
+    * description: Get a specific resource by ID.
+* parameters:
+* — in: path
+    * name: id
+        * required: true
+            * description: ID of the resource to retrieve.
+* schema:
+* type: string
+    * responses:
+* 200:
+* description: Successful response
+*/
+app.get('/api/resource /: id', (req, res) => {
+    // Your route logic goes here
+});
 
 // path = GET /users
 app.get('/users', async (req, res) => {
@@ -182,6 +205,7 @@ app.delete('/api/user/:id', async (req, res) => {
 
 app.listen(port, async (req, res) => {
     // await sequelize.sync({ force: true });
-    await sequelize.sync({ alter: true });
+    // await sequelize.sync({ alter: true });
+    await sequelize.sync();
     console.log(`Server is running on http://localhost:${port}`)
 })
