@@ -2,7 +2,8 @@ require('dotenv').config()
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
-const mysql = require("mysql2/promise");
+// const swaggerUi = require('swagger-ui-express');
+// const swaggerDocument = require('./swagger.json');
 const { Sequelize, DataTypes, cast } = require("sequelize");
 app.use(bodyParser.json());
 
@@ -10,15 +11,6 @@ app.use(bodyParser.json());
 const port = 8000;
 
 let conn = null
-
-const initMySql = async () => {
-    conn = await mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_DATABASE,
-    })
-}
 
 // sequelize
 const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, process.env.DB_PASSWORD, {
@@ -189,7 +181,6 @@ app.delete('/api/user/:id', async (req, res) => {
 
 
 app.listen(port, async (req, res) => {
-    await initMySql()
     // await sequelize.sync({ force: true });
     await sequelize.sync({ alter: true });
     console.log(`Server is running on http://localhost:${port}`)
