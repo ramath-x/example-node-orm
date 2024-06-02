@@ -110,11 +110,9 @@ paths:
                   type: array
                   example: [
                     {
-                      id: 1,
                       address1: "london"
                     },
                     {
-                      id: 2,
                       address1: "las Vegas"
                     }
                   ]
