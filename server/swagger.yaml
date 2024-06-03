@@ -90,6 +90,21 @@ paths:
       responses: 
         '201':
           description: Created
+    delete:
+      summary: Deletes a pet
+      description: delete a pet
+      operationId: deletePet
+      parameters:
+        - name: id
+          in: path
+          description: User id to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid pet value    
   /user:          
     post:
       summary: Creates a user.

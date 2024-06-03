@@ -171,13 +171,13 @@ app.put('/api/users/:id', async (req, res) => {
 })
 
 // path = DELETE /user/:id
-app.delete('/api/user/:id', async (req, res) => {
+app.delete('/api/users/:id', async (req, res) => {
     try {
         const userId = req.params.id
         const results = await User.destroy({ where: { id: userId } })
         // const address = await Address.destroy({ where: { userId: userId } })
         res.json({
-            success: 'insert ok',
+            success: 'deleted ok',
             user: results,
         });
     } catch (error) {
