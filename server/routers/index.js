@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { Sequelize, DataTypes, cast } = require("sequelize");
-
+const { query, validationResult, body, matchedData, checkSchema } = require('express-validator');
+import { createUserValidationSchema } from ("../utils/validationSchemas.mjs")
 const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, process.env.DB_PASSWORD, {
     host: process.env.DB_HOST,
     dialect: 'mysql' /* one of 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'db2' | 'snowflake' | 'oracle' */
@@ -49,20 +50,40 @@ User.hasMany(Address)
 Address.belongsTo(User)
 
 // path = GET /users
-router.get('/users', async (req, res) => {
-    try {
-        const user = await User.findAll()
-        res.json({
-            data: user
-        });
-    } catch (error) {
-        console.log('Error fetching users:', error.message)
-        res.json({
-            massage: 'Error fetching users',
-            errorMessage: error.message
-        })
-    }
-})
+router.get('/users',
+    // validation search=string, 3-10 characters, sort_feld=string, asc/desc
+    [query('search')
+        .isString()
+        .withMessage('search must be a string')
+        .isLength({ min: 3, max: 10 })
+        .withMessage('search must be between 3 and 10 characters'),
+    query('sort_field')
+        .isString()
+        .withMessage('sort_field must be a string')
+        .isIn(['name', 'email'])
+        .withMessage('sort_field must be name or email')
+    ],
+    async (req, res) => {
+        try {
+            const results = validationResult(req)
+            console.log(results)
+            if (!results.isEmpty()) {
+                throw new Error(result.array())
+                // res.send(results.array())
+            }
+            const user = await User.findAll()
+            res.json({
+                data: user
+            });
+        } catch (error) {
+            console.log('Error fetching users:', error.message)
+            res.json({
+                massage: 'Error fetching users',
+                errorMessage: error.message,
+                error: error
+            })
+        }
+    })
 
 router.get('/api/users/:id/address', async (req, res) => {
     try {
@@ -90,12 +111,13 @@ router.get('/api/users/:id/address', async (req, res) => {
 //  path = POST /user + address
 router.post('/user', async (req, res) => {
     try {
+
         let user = req.body;
-        const results = await User.create(user)
-        user.userId = await results.id
+        let addressCreated = []
+        const data = await User.create(user)
+        user.userId = await data.id
         const addressData = user.addresses
 
-        let addressCreated = []
         for (let i = 0; i < addressData.length; i++) {
             let cAddressData = addressData[i]
             cAddressData.userId = user.userId
@@ -105,7 +127,7 @@ router.post('/user', async (req, res) => {
 
         res.json({
             success: 'insert ok',
-            user: results,
+            user: data,
             address: addressCreated
         });
     } catch (errors) {
@@ -113,6 +135,7 @@ router.post('/user', async (req, res) => {
         res.status(500).json({
             message: 'insert error',
             error: errors.errors.map(e => e.message)
+            // errorMessage: errors
         })
     }
 })
@@ -162,6 +185,40 @@ router.delete('/api/users/:id', async (req, res) => {
     } catch (error) {
 
     }
+
+
+})
+
+// api for pactise validation
+// path = POST /user/validation
+router.post('/user/validation', checkSchema(createUserValidationSchema), async (req, res) => {
+    const results = validationResult(req)
+    const data = matchedData(req)
+    console.log(results)
+    if (!results.isEmpty()) {
+        res.status(400).json({ errors: results.array() })
+    }
+    let user = req.body;
+    let addressCreated = []
+
+
+    // const data = await User.create(user)
+    // user.userId = await data.id
+    // const addressData = user.addresses
+
+    // for (let i = 0; i < addressData.length; i++) {
+    //     let cAddressData = addressData[i]
+    //     cAddressData.userId = user.userId
+    //     const address = await Address.create(cAddressData)
+    //     addressCreated.push(address)
+    // }
+
+    res.json({
+        success: 'insert ok',
+        user: data,
+        // address: addressCreated
+    });
+
 })
 
 module.exports = router;
