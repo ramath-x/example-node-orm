@@ -21,6 +21,9 @@ const userValidationRules = () => {
         check('email')
             .notEmpty().withMessage('email is required')
             .isEmail().withMessage('email must be valid'),
+        check('addresses')
+            .isArray().withMessage('addresses must be an array'),
+        check('addresses.*.address1').isString().withMessage('address1 must be a string'),
     ];
 };
 

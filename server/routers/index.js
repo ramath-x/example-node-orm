@@ -4,6 +4,7 @@ const { Sequelize, DataTypes, cast } = require("sequelize");
 const { query, validationResult, body, matchedData, checkSchema } = require('express-validator');
 // const { createUserValidationSchema } = require("../utils/validationSchemas.js")
 const { userValidationRules } = require('../utils/user')
+const validationHandler = require('../middlewares/validationHandler')
 const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, process.env.DB_PASSWORD, {
     host: process.env.DB_HOST,
     dialect: 'mysql' /* one of 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'db2' | 'snowflake' | 'oracle' */
@@ -110,15 +111,17 @@ router.get('/api/users/:id/address', async (req, res) => {
 
 
 //  path = POST /user + address
-router.post('/user', async (req, res) => {
+// router.post('/user', async (req, res) => {
+router.post('/user', userValidationRules(), validationHandler, async (req, res, next) => {
     try {
-
-        let user = req.body;
+        const user = matchedData(req)
+        let addresses = req.body.addresses;
+        // console.log(user)
         let addressCreated = []
         const data = await User.create(user)
         user.userId = await data.id
-        const addressData = user.addresses
-
+        const addressData = addresses
+        console.log(addressData)
         for (let i = 0; i < addressData.length; i++) {
             let cAddressData = addressData[i]
             cAddressData.userId = user.userId
@@ -132,7 +135,7 @@ router.post('/user', async (req, res) => {
             address: addressCreated
         });
     } catch (errors) {
-        console.error('insert user:', errors.errors)
+        console.error('insert user:', errors)
         res.status(500).json({
             message: 'insert error',
             error: errors.errors.map(e => e.message)
@@ -196,60 +199,19 @@ router.delete('/api/users/:id', async (req, res) => {
 
 // api for pactise validation
 // path = POST /user/validation
-router.post('/user/validation', userValidationRules(), async (req, res) => {
-    // const results = validationResult(req)
-    const data = matchedData(req)
-    // console.log(results)
-    // if (!results.isEmpty()) {
-    //     res.status(400).json({ errors: results.array() })
-    // }
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+router.post('/user/validation', userValidationRules(), validationHandler, async (req, res, next) => {
+    try {
+        const data = matchedData(req)
+        res.json({
+            success: 'insert ok',
+            user: data,
+            // address: addressCreated
+        });
+    } catch (error) {
+        res.status(400).error(error)
     }
-    let user = req.body;
-    let addressCreated = []
 
-
-    // const data = await User.create(user)
-    // user.userId = await data.id
-    // const addressData = user.addresses
-
-    // for (let i = 0; i < addressData.length; i++) {
-    //     let cAddressData = addressData[i]
-    //     cAddressData.userId = user.userId
-    //     const address = await Address.create(cAddressData)
-    //     addressCreated.push(address)
-    // }
-
-    res.json({
-        success: 'insert ok',
-        user: data,
-        // address: addressCreated
-    });
 
 })
-
-router.post('/submit', userValidationRules(), async (req, res, next) => {
-    const errors = await validationResult(req);
-    if (!errors.isEmpty()) {
-        console.log(errors)
-        const customError = errors.array().map(err => ({
-            type: 'field',
-            msg: err.msg,
-            path: err.path,
-            location: err.location
-        }));
-
-        // Throw a custom error object
-        const error = new Error('Validation Error');
-        error.status = 400;
-        error.details = customError;
-        return next(error);
-    }
-
-    // Proceed with your logic if no errors
-    res.send('Success');
-});
 
 module.exports = router;
