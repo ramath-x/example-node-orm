@@ -23,8 +23,19 @@ const sequelize = require('./configs/databases');
 sequelize
 
 
-app.use(require('./routers/index'));
-
+// app.use(require('./routers/index'));
+app.use(require('./routers/index'), (err, req, res, next) => {
+    if (err) {
+        const status = err.status || 500;
+        const errorResponse = {
+            message: err.message,
+            errors: err.details || []
+        };
+        res.status(status).json(errorResponse);
+    } else {
+        next();
+    }
+});
 
 app.listen(port, async (req, res) => {
     // await sequelize.sync({ force: true });

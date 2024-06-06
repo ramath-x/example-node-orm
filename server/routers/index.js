@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { Sequelize, DataTypes, cast } = require("sequelize");
 const { query, validationResult, body, matchedData, checkSchema } = require('express-validator');
-import { createUserValidationSchema } from ("../utils/validationSchemas.mjs")
+// const { createUserValidationSchema } = require("../utils/validationSchemas.js")
+const { userValidationRules } = require('../utils/user')
 const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, process.env.DB_PASSWORD, {
     host: process.env.DB_HOST,
     dialect: 'mysql' /* one of 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'db2' | 'snowflake' | 'oracle' */
@@ -184,6 +185,10 @@ router.delete('/api/users/:id', async (req, res) => {
         });
     } catch (error) {
 
+        res.status(500).json({
+            message: 'delete error',
+            error: dataError
+        })
     }
 
 
@@ -191,12 +196,16 @@ router.delete('/api/users/:id', async (req, res) => {
 
 // api for pactise validation
 // path = POST /user/validation
-router.post('/user/validation', checkSchema(createUserValidationSchema), async (req, res) => {
-    const results = validationResult(req)
+router.post('/user/validation', userValidationRules(), async (req, res) => {
+    // const results = validationResult(req)
     const data = matchedData(req)
-    console.log(results)
-    if (!results.isEmpty()) {
-        res.status(400).json({ errors: results.array() })
+    // console.log(results)
+    // if (!results.isEmpty()) {
+    //     res.status(400).json({ errors: results.array() })
+    // }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
     let user = req.body;
     let addressCreated = []
@@ -220,5 +229,27 @@ router.post('/user/validation', checkSchema(createUserValidationSchema), async (
     });
 
 })
+
+router.post('/submit', userValidationRules(), async (req, res, next) => {
+    const errors = await validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors)
+        const customError = errors.array().map(err => ({
+            type: 'field',
+            msg: err.msg,
+            path: err.path,
+            location: err.location
+        }));
+
+        // Throw a custom error object
+        const error = new Error('Validation Error');
+        error.status = 400;
+        error.details = customError;
+        return next(error);
+    }
+
+    // Proceed with your logic if no errors
+    res.send('Success');
+});
 
 module.exports = router;
