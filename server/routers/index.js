@@ -10,6 +10,8 @@ const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, pr
     dialect: 'mysql' /* one of 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'db2' | 'snowflake' | 'oracle' */
 });
 
+
+
 const User = sequelize.define('users', {
     id: {
         type: DataTypes.INTEGER,
@@ -51,41 +53,7 @@ const Address = sequelize.define("addresses", {
 User.hasMany(Address)
 Address.belongsTo(User)
 
-// path = GET /users
-router.get('/users',
-    // validation search=string, 3-10 characters, sort_feld=string, asc/desc
-    [query('search')
-        .isString()
-        .withMessage('search must be a string')
-        .isLength({ min: 3, max: 10 })
-        .withMessage('search must be between 3 and 10 characters'),
-    query('sort_field')
-        .isString()
-        .withMessage('sort_field must be a string')
-        .isIn(['name', 'email'])
-        .withMessage('sort_field must be name or email')
-    ],
-    async (req, res) => {
-        try {
-            const results = validationResult(req)
-            console.log(results)
-            if (!results.isEmpty()) {
-                throw new Error(result.array())
-                // res.send(results.array())
-            }
-            const user = await User.findAll()
-            res.json({
-                data: user
-            });
-        } catch (error) {
-            console.log('Error fetching users:', error.message)
-            res.json({
-                massage: 'Error fetching users',
-                errorMessage: error.message,
-                error: error
-            })
-        }
-    })
+router.use(require('./user'))
 
 router.get('/api/users/:id/address', async (req, res) => {
     try {
